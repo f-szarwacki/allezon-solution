@@ -1,0 +1,23 @@
+global
+    maxconn 50000
+    log /dev/log local0
+    chroot /var/lib/haproxy
+    stats socket /run/haproxy/admin.sock user haproxy group haproxy mode 660 level admin
+
+defaults
+    timeout connect 10s
+    timeout client 30s
+    timeout server 30s
+    log global
+    mode http
+    option httplog
+
+frontend entrypoint
+    bind :8088
+    default_backend processor
+
+backend processor
+    balance roundrobin
+    {% for ip in groups['processor'] %}
+    server server{{ loop.index }} {{ ip }}:8090
+    {% endfor %}

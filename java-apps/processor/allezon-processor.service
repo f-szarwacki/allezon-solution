@@ -1,0 +1,14 @@
+[Unit]
+Description=Allezon processor
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=processor
+RestartSec=1
+ExecStart=/bin/sh -c 'java -jar /opt/processor/app.jar'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

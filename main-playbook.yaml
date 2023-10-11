@@ -1,0 +1,6 @@
+---
+- import_playbook: java-apps/java-apps-build.yaml
+- import_playbook: haproxy/haproxy.yaml
+- import_playbook: aerospike/aerospike.yaml
+- import_playbook: kafka/kafka.yaml
+- import_playbook: java-apps/java-apps-deploy.yaml

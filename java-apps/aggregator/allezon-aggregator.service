@@ -1,0 +1,14 @@
+[Unit]
+Description=Allezon aggregator
+After=network.target
+StartLimitIntervalSec=0
+
+[Service]
+Type=simple
+User=aggregator
+RestartSec=1
+ExecStart=/bin/sh -c 'java -jar /opt/aggregator/app.jar'
+Restart=always
+
+[Install]
+WantedBy=multi-user.target

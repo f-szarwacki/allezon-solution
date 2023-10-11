@@ -1,0 +1,51 @@
+---
+- name: Compile Java Application
+  hosts: 127.0.0.1
+  connection: local
+  become: yes
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+      when: ansible_pkg_mgr == 'apt'
+
+    - name: Install Java Development Kit (JDK)
+      apt:
+        name: openjdk-17-jdk
+        state: present
+      when: ansible_pkg_mgr == 'apt'
+
+    - name: Download Apache Maven 
+      get_url: url=https://dlcdn.apache.org/maven/maven-3/3.9.4/binaries/apache-maven-3.9.4-bin.tar.gz dest=/tmp/apache-maven-3.9.4-bin.tar.gz
+
+    - name: Untar Maven 
+      shell: chdir=/tmp creates=/opt/apache-maven-3.9.4 tar -zxf apache-maven-3.9.4-bin.tar.gz -C /opt
+
+    - name: Add Maven to PATH
+      shell: export PATH=/opt/apache-maven-3.9.4/bin:$PATH
+
+    - name: Build java-apps/common
+      command: /opt/apache-maven-3.9.4/bin/mvn clean install
+      args:
+        chdir: /home/st115/pds-project/java-apps/common
+
+    - name: Template configuration for processor
+      template:
+        src: processor/application.properties.j2
+        dest: /home/st115/pds-project/java-apps/processor/src/main/resources/application.properties
+
+    - name: Build java-apps/processor
+      command: /opt/apache-maven-3.9.4/bin/mvn clean package
+      args:
+        chdir: /home/st115/pds-project/java-apps/processor
+
+    - name: Template configuration for aggregator
+      template:
+        src: aggregator/application.properties.j2
+        dest: /home/st115/pds-project/java-apps/aggregator/src/main/resources/application.properties
+
+    - name: Build java-apps/aggregator
+      command: /opt/apache-maven-3.9.4/bin/mvn clean package
+      args:
+        chdir: /home/st115/pds-project/java-apps/aggregator

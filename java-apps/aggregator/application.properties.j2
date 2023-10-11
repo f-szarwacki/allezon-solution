@@ -1,0 +1,8 @@
+server.port=8090
+
+aerospike.hosts={% for svr in groups.aerospike %}{{svr}}:3000{% if not loop.last %},{% endif %}{% endfor %}
+
+aerospike.namespace=allezon
+
+kafka.topic=user-tag-events
+kafka.bootstrap.servers={% for svr in groups.kafka %}{{svr}}:9092{% if not loop.last %},{% endif %}{% endfor %}

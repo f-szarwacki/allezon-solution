@@ -1,0 +1,160 @@
+---
+- name: Set up Java environment
+  hosts: processor:aggregator
+  become: yes
+
+  tasks:
+    - name: Update package cache
+      apt:
+        update_cache: yes
+      when: ansible_pkg_mgr == 'apt'
+
+    - name: Install Java Development Kit (JDK)
+      apt:
+        name: openjdk-17-jdk
+        state: present
+      when: ansible_pkg_mgr == 'apt'
+
+- name: Processor deploy
+  hosts: processor
+  become: yes
+
+  tasks:
+    - name: Ensure group "processor" exists
+      become: true
+      group:
+        name: processor
+        state: present
+
+    - name: Ensure user "processor" exists
+      become: true
+      user:
+        name: processor
+        home: /opt/processor
+        state: present
+        group: processor
+
+    - name: Copy local JAR file to remote host
+      copy:
+        src: processor/target/processor-1.0.jar
+        dest: /opt/processor/app.jar
+        remote_src: false
+        owner: processor
+        group: processor
+      become: yes
+
+    - name: Create logs directory
+      become: true
+      file:
+        path: /var/log/processor
+        state: directory
+        owner: processor
+        group: processor
+
+    - name: Create logs file
+      become: true
+      file:
+        path: /var/log/processor/processor.log
+        state: touch
+        owner: processor
+        group: processor
+
+    - name: Release Port
+      become: true
+      shell: "lsof -t -i:8090 | xargs -r kill"
+
+    - name: Copy service file with owner and permissions
+      become: true
+      copy:
+        src: processor/allezon-processor.service
+        dest: /etc/systemd/system/allezon-processor.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Ensure the processor daemon is enabled
+      become: true
+      become_user: root
+      systemd:
+        name: allezon-processor
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Restart service
+      become: true
+      become_user: root
+      systemd:
+        name: allezon-processor
+        state: restarted
+        enabled: yes
+
+- name: Aggregator deploy
+  hosts: aggregator
+  become: yes
+
+  tasks:
+    - name: Ensure group "aggregator" exists
+      become: true
+      group:
+        name: aggregator
+        state: present
+
+    - name: Ensure user "aggregator" exists
+      become: true
+      user:
+        name: aggregator
+        home: /opt/aggregator
+        state: present
+        group: aggregator
+
+    - name: Copy local JAR file to remote host
+      copy:
+        src: aggregator/target/aggregator-1.0.jar
+        dest: /opt/aggregator/app.jar
+        remote_src: false
+        owner: aggregator
+        group: aggregator
+      become: yes
+
+    - name: Create logs directory
+      become: true
+      file:
+        path: /var/log/aggregator
+        state: directory
+        owner: aggregator
+        group: aggregator
+
+    - name: Create logs file
+      become: true
+      file:
+        path: /var/log/aggregator/aggregator.log
+        state: touch
+        owner: aggregator
+        group: aggregator
+
+    - name: Copy service file with owner and permissions
+      become: true
+      copy:
+        src: aggregator/allezon-aggregator.service
+        dest: /etc/systemd/system/allezon-aggregator.service
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Ensure the aggregator daemon is enabled
+      become: true
+      become_user: root
+      systemd:
+        name: allezon-aggregator
+        state: started
+        enabled: yes
+        daemon_reload: yes
+
+    - name: Restart service
+      become: true
+      become_user: root
+      systemd:
+        name: allezon-aggregator
+        state: restarted
+        enabled: yes

@@ -1,0 +1,23 @@
+---
+- name: Haproxy install and configuration
+  any_errors_fatal: true
+  hosts: haproxy
+
+  tasks:
+    - name: Install haproxy
+      become: true
+      package:
+          name: haproxy
+          state: present
+
+    - name: Configure haproxy
+      become: true
+      template:
+        src: haproxy.cfg.j2
+        dest: /etc/haproxy/haproxy.cfg
+
+    - name: Haproxy service start
+      become: true
+      service:
+        name: haproxy
+        state: restarted
